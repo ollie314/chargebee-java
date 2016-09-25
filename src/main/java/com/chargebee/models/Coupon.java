@@ -2,6 +2,8 @@ package com.chargebee.models;
 
 import com.chargebee.*;
 import com.chargebee.internal.*;
+import com.chargebee.filters.*;
+import com.chargebee.filters.enums.SortOrder;
 import com.chargebee.internal.HttpUtil.Method;
 import com.chargebee.models.enums.*;
 import org.json.*;
@@ -14,6 +16,7 @@ public class Coupon extends Resource<Coupon> {
     public enum DiscountType {
         FIXED_AMOUNT,
         PERCENTAGE,
+        @Deprecated
         OFFER_QUANTITY,
         _UNKNOWN; /*Indicates unexpected value for this enum. You can get this when there is a
         java-client version incompatibility. We suggest you to upgrade to the latest version */
@@ -31,6 +34,7 @@ public class Coupon extends Resource<Coupon> {
         ACTIVE,
         EXPIRED,
         ARCHIVED,
+        DELETED,
         _UNKNOWN; /*Indicates unexpected value for this enum. You can get this when there is a
         java-client version incompatibility. We suggest you to upgrade to the latest version */
     }
@@ -47,8 +51,10 @@ public class Coupon extends Resource<Coupon> {
 
     public enum ApplyOn {
         INVOICE_AMOUNT,
+        @Deprecated
         SPECIFIED_ITEMS_TOTAL,
         EACH_SPECIFIED_ITEM,
+        @Deprecated
         EACH_UNIT_OF_SPECIFIED_ITEMS,
         _UNKNOWN; /*Indicates unexpected value for this enum. You can get this when there is a
         java-client version incompatibility. We suggest you to upgrade to the latest version */
@@ -110,8 +116,13 @@ public class Coupon extends Resource<Coupon> {
         return optInteger("discount_amount");
     }
 
+    @Deprecated
     public Integer discountQuantity() {
         return optInteger("discount_quantity");
+    }
+
+    public String currencyCode() {
+        return optString("currency_code");
     }
 
     public DurationType durationType() {
@@ -132,10 +143,6 @@ public class Coupon extends Resource<Coupon> {
 
     public Status status() {
         return optEnum("status", Status.class);
-    }
-
-    public Integer redemptions() {
-        return optInteger("redemptions");
     }
 
     @Deprecated
@@ -171,6 +178,18 @@ public class Coupon extends Resource<Coupon> {
         return optList("addon_ids", String.class);
     }
 
+    public Integer redemptions() {
+        return optInteger("redemptions");
+    }
+
+    public String invoiceNotes() {
+        return optString("invoice_notes");
+    }
+
+    public JSONObject metaData() {
+        return optJSONObject("meta_data");
+    }
+
     // Operations
     //===========
 
@@ -179,14 +198,19 @@ public class Coupon extends Resource<Coupon> {
         return new CreateRequest(Method.POST, uri);
     }
 
-    public static ListRequest list() throws IOException {
+    public static CouponListRequest list() throws IOException {
         String uri = uri("coupons");
-        return new ListRequest(uri);
+        return new CouponListRequest(uri);
     }
 
     public static Request retrieve(String id) throws IOException {
         String uri = uri("coupons", nullCheck(id));
         return new Request(Method.GET, uri);
+    }
+
+    public static Request delete(String id) throws IOException {
+        String uri = uri("coupons", nullCheck(id), "delete");
+        return new Request(Method.POST, uri);
     }
 
 
@@ -229,12 +253,19 @@ public class Coupon extends Resource<Coupon> {
         }
 
 
+        public CreateRequest currencyCode(String currencyCode) {
+            params.addOpt("currency_code", currencyCode);
+            return this;
+        }
+
+
         public CreateRequest discountPercentage(Double discountPercentage) {
             params.addOpt("discount_percentage", discountPercentage);
             return this;
         }
 
 
+        @Deprecated
         public CreateRequest discountQuantity(Integer discountQuantity) {
             params.addOpt("discount_quantity", discountQuantity);
             return this;
@@ -299,6 +330,71 @@ public class Coupon extends Resource<Coupon> {
 
         public CreateRequest maxRedemptions(Integer maxRedemptions) {
             params.addOpt("max_redemptions", maxRedemptions);
+            return this;
+        }
+
+
+        public CreateRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public CreateRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
+            return this;
+        }
+
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class CouponListRequest extends ListRequest<CouponListRequest> {
+
+        private CouponListRequest(String uri) {
+            super(uri);
+        }
+    
+        public StringFilter<CouponListRequest> id() {
+            return new StringFilter<CouponListRequest>("id",this).supportsMultiOperators(true);        
+        }
+
+
+        public StringFilter<CouponListRequest> name() {
+            return new StringFilter<CouponListRequest>("name",this).supportsMultiOperators(true);        
+        }
+
+
+        public EnumFilter<DiscountType, CouponListRequest> discountType() {
+            return new EnumFilter<DiscountType, CouponListRequest>("discount_type",this);        
+        }
+
+
+        public EnumFilter<DurationType, CouponListRequest> durationType() {
+            return new EnumFilter<DurationType, CouponListRequest>("duration_type",this);        
+        }
+
+
+        public EnumFilter<Status, CouponListRequest> status() {
+            return new EnumFilter<Status, CouponListRequest>("status",this);        
+        }
+
+
+        public EnumFilter<ApplyOn, CouponListRequest> applyOn() {
+            return new EnumFilter<ApplyOn, CouponListRequest>("apply_on",this);        
+        }
+
+
+        public TimestampFilter<CouponListRequest> createdAt() {
+            return new TimestampFilter<CouponListRequest>("created_at",this);        
+        }
+
+
+        public CouponListRequest sortByCreatedAt(SortOrder order) {
+            params.addOpt("sort_by["+order.name().toLowerCase()+"]","created_at");
             return this;
         }
 

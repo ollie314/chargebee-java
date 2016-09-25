@@ -2,6 +2,8 @@ package com.chargebee.models;
 
 import com.chargebee.*;
 import com.chargebee.internal.*;
+import com.chargebee.filters.*;
+import com.chargebee.filters.enums.SortOrder;
 import com.chargebee.internal.HttpUtil.Method;
 import com.chargebee.models.enums.*;
 import org.json.*;
@@ -10,107 +12,6 @@ import java.sql.Timestamp;
 import java.util.*;
 
 public class Estimate extends Resource<Estimate> {
-
-    public static class LineItem extends Resource<LineItem> {
-        public enum Type {
-            CHARGE, PRORATED_CHARGE, SETUP_CHARGE;
-        }
-
-        public enum EntityType {
-            PLAN, ADDON, ADHOC;
-        }
-
-        public LineItem(JSONObject jsonObj) {
-            super(jsonObj);
-        }
-
-        public Timestamp dateFrom() {
-            return reqTimestamp("date_from");
-        }
-
-        public Timestamp dateTo() {
-            return reqTimestamp("date_to");
-        }
-
-        public Integer unitAmount() {
-            return reqInteger("unit_amount");
-        }
-
-        public Integer quantity() {
-            return optInteger("quantity");
-        }
-
-        public Integer tax() {
-            return optInteger("tax");
-        }
-
-        public Double taxRate() {
-            return optDouble("tax_rate");
-        }
-
-        public Integer amount() {
-            return reqInteger("amount");
-        }
-
-        public String description() {
-            return reqString("description");
-        }
-
-        public Type type() {
-            return reqEnum("type", Type.class);
-        }
-
-        public EntityType entityType() {
-            return reqEnum("entity_type", EntityType.class);
-        }
-
-        public String entityId() {
-            return optString("entity_id");
-        }
-
-    }
-
-    public static class Discount extends Resource<Discount> {
-        public enum Type {
-            COUPON, CREDIT_ADJUSTMENT;
-        }
-
-        public Discount(JSONObject jsonObj) {
-            super(jsonObj);
-        }
-
-        public Integer amount() {
-            return reqInteger("amount");
-        }
-
-        public String description() {
-            return optString("description");
-        }
-
-        public Type type() {
-            return reqEnum("type", Type.class);
-        }
-
-        public String entityId() {
-            return optString("entity_id");
-        }
-
-    }
-
-    public static class Tax extends Resource<Tax> {
-        public Tax(JSONObject jsonObj) {
-            super(jsonObj);
-        }
-
-        public Integer amount() {
-            return reqInteger("amount");
-        }
-
-        public String description() {
-            return optString("description");
-        }
-
-    }
 
     //Constructors
     //============
@@ -130,44 +31,20 @@ public class Estimate extends Resource<Estimate> {
         return reqTimestamp("created_at");
     }
 
-    public Boolean recurring() {
-        return reqBoolean("recurring");
+    public SubscriptionEstimate subscriptionEstimate() {
+        return optSubResource("subscription_estimate", SubscriptionEstimate.class);
     }
 
-    public String subscriptionId() {
-        return optString("subscription_id");
+    public InvoiceEstimate invoiceEstimate() {
+        return optSubResource("invoice_estimate", InvoiceEstimate.class);
     }
 
-    public SubscriptionStatus subscriptionStatus() {
-        return optEnum("subscription_status", SubscriptionStatus.class);
+    public InvoiceEstimate nextInvoiceEstimate() {
+        return optSubResource("next_invoice_estimate", InvoiceEstimate.class);
     }
 
-    public Timestamp termEndsAt() {
-        return optTimestamp("term_ends_at");
-    }
-
-    public Boolean collectNow() {
-        return reqBoolean("collect_now");
-    }
-
-    public Integer amount() {
-        return reqInteger("amount");
-    }
-
-    public Integer subTotal() {
-        return reqInteger("sub_total");
-    }
-
-    public List<Estimate.LineItem> lineItems() {
-        return optList("line_items", Estimate.LineItem.class);
-    }
-
-    public List<Estimate.Discount> discounts() {
-        return optList("discounts", Estimate.Discount.class);
-    }
-
-    public List<Estimate.Tax> taxes() {
-        return optList("taxes", Estimate.Tax.class);
+    public List<CreditNoteEstimate> creditNoteEstimates() {
+        return optList("credit_note_estimates", CreditNoteEstimate.class);
     }
 
     // Operations
@@ -181,6 +58,11 @@ public class Estimate extends Resource<Estimate> {
     public static UpdateSubscriptionRequest updateSubscription() throws IOException {
         String uri = uri("estimates", "update_subscription");
         return new UpdateSubscriptionRequest(Method.POST, uri);
+    }
+
+    public static RenewalEstimateRequest renewalEstimate(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "renewal_estimate");
+        return new RenewalEstimateRequest(Method.GET, uri);
     }
 
 
@@ -229,13 +111,103 @@ public class Estimate extends Resource<Estimate> {
             return this;
         }
 
+        public CreateSubscriptionRequest billingAddressLine1(String billingAddressLine1) {
+            params.addOpt("billing_address[line1]", billingAddressLine1);
+            return this;
+        }
+
+        public CreateSubscriptionRequest billingAddressLine2(String billingAddressLine2) {
+            params.addOpt("billing_address[line2]", billingAddressLine2);
+            return this;
+        }
+
+        public CreateSubscriptionRequest billingAddressLine3(String billingAddressLine3) {
+            params.addOpt("billing_address[line3]", billingAddressLine3);
+            return this;
+        }
+
+        public CreateSubscriptionRequest billingAddressCity(String billingAddressCity) {
+            params.addOpt("billing_address[city]", billingAddressCity);
+            return this;
+        }
+
+        public CreateSubscriptionRequest billingAddressStateCode(String billingAddressStateCode) {
+            params.addOpt("billing_address[state_code]", billingAddressStateCode);
+            return this;
+        }
+
+        public CreateSubscriptionRequest billingAddressZip(String billingAddressZip) {
+            params.addOpt("billing_address[zip]", billingAddressZip);
+            return this;
+        }
+
         public CreateSubscriptionRequest billingAddressCountry(String billingAddressCountry) {
             params.addOpt("billing_address[country]", billingAddressCountry);
             return this;
         }
 
+        public CreateSubscriptionRequest billingAddressValidationStatus(ValidationStatus billingAddressValidationStatus) {
+            params.addOpt("billing_address[validation_status]", billingAddressValidationStatus);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressLine1(String shippingAddressLine1) {
+            params.addOpt("shipping_address[line1]", shippingAddressLine1);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressLine2(String shippingAddressLine2) {
+            params.addOpt("shipping_address[line2]", shippingAddressLine2);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressLine3(String shippingAddressLine3) {
+            params.addOpt("shipping_address[line3]", shippingAddressLine3);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressCity(String shippingAddressCity) {
+            params.addOpt("shipping_address[city]", shippingAddressCity);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressStateCode(String shippingAddressStateCode) {
+            params.addOpt("shipping_address[state_code]", shippingAddressStateCode);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressZip(String shippingAddressZip) {
+            params.addOpt("shipping_address[zip]", shippingAddressZip);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressCountry(String shippingAddressCountry) {
+            params.addOpt("shipping_address[country]", shippingAddressCountry);
+            return this;
+        }
+
+        public CreateSubscriptionRequest shippingAddressValidationStatus(ValidationStatus shippingAddressValidationStatus) {
+            params.addOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
+            return this;
+        }
+
         public CreateSubscriptionRequest customerVatNumber(String customerVatNumber) {
             params.addOpt("customer[vat_number]", customerVatNumber);
+            return this;
+        }
+
+        public CreateSubscriptionRequest customerTaxability(Taxability customerTaxability) {
+            params.addOpt("customer[taxability]", customerTaxability);
+            return this;
+        }
+
+        public CreateSubscriptionRequest customerEntityCode(EntityCode customerEntityCode) {
+            params.addOpt("customer[entity_code]", customerEntityCode);
+            return this;
+        }
+
+        public CreateSubscriptionRequest customerExemptNumber(String customerExemptNumber) {
+            params.addOpt("customer[exempt_number]", customerExemptNumber);
             return this;
         }
 
@@ -285,6 +257,18 @@ public class Estimate extends Resource<Estimate> {
         }
 
 
+        public UpdateSubscriptionRequest includeDelayedCharges(Boolean includeDelayedCharges) {
+            params.addOpt("include_delayed_charges", includeDelayedCharges);
+            return this;
+        }
+
+
+        public UpdateSubscriptionRequest useExistingBalances(Boolean useExistingBalances) {
+            params.addOpt("use_existing_balances", useExistingBalances);
+            return this;
+        }
+
+
         public UpdateSubscriptionRequest subscriptionId(String subscriptionId) {
             params.add("subscription[id]", subscriptionId);
             return this;
@@ -315,13 +299,94 @@ public class Estimate extends Resource<Estimate> {
             return this;
         }
 
+        public UpdateSubscriptionRequest billingAddressLine1(String billingAddressLine1) {
+            params.addOpt("billing_address[line1]", billingAddressLine1);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest billingAddressLine2(String billingAddressLine2) {
+            params.addOpt("billing_address[line2]", billingAddressLine2);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest billingAddressLine3(String billingAddressLine3) {
+            params.addOpt("billing_address[line3]", billingAddressLine3);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest billingAddressCity(String billingAddressCity) {
+            params.addOpt("billing_address[city]", billingAddressCity);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest billingAddressStateCode(String billingAddressStateCode) {
+            params.addOpt("billing_address[state_code]", billingAddressStateCode);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest billingAddressZip(String billingAddressZip) {
+            params.addOpt("billing_address[zip]", billingAddressZip);
+            return this;
+        }
+
         public UpdateSubscriptionRequest billingAddressCountry(String billingAddressCountry) {
             params.addOpt("billing_address[country]", billingAddressCountry);
             return this;
         }
 
+        public UpdateSubscriptionRequest billingAddressValidationStatus(ValidationStatus billingAddressValidationStatus) {
+            params.addOpt("billing_address[validation_status]", billingAddressValidationStatus);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressLine1(String shippingAddressLine1) {
+            params.addOpt("shipping_address[line1]", shippingAddressLine1);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressLine2(String shippingAddressLine2) {
+            params.addOpt("shipping_address[line2]", shippingAddressLine2);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressLine3(String shippingAddressLine3) {
+            params.addOpt("shipping_address[line3]", shippingAddressLine3);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressCity(String shippingAddressCity) {
+            params.addOpt("shipping_address[city]", shippingAddressCity);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressStateCode(String shippingAddressStateCode) {
+            params.addOpt("shipping_address[state_code]", shippingAddressStateCode);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressZip(String shippingAddressZip) {
+            params.addOpt("shipping_address[zip]", shippingAddressZip);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressCountry(String shippingAddressCountry) {
+            params.addOpt("shipping_address[country]", shippingAddressCountry);
+            return this;
+        }
+
+        public UpdateSubscriptionRequest shippingAddressValidationStatus(ValidationStatus shippingAddressValidationStatus) {
+            params.addOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
+            return this;
+        }
+
         public UpdateSubscriptionRequest customerVatNumber(String customerVatNumber) {
             params.addOpt("customer[vat_number]", customerVatNumber);
+            return this;
+        }
+
+        @Deprecated
+        public UpdateSubscriptionRequest customerTaxability(Taxability customerTaxability) {
+            params.addOpt("customer[taxability]", customerTaxability);
             return this;
         }
 
@@ -334,6 +399,30 @@ public class Estimate extends Resource<Estimate> {
             params.addOpt("addons[quantity][" + index + "]", addonQuantity);
             return this;
         }
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class RenewalEstimateRequest extends Request<RenewalEstimateRequest> {
+
+        private RenewalEstimateRequest(Method httpMeth, String uri) {
+            super(httpMeth, uri);
+        }
+    
+        public RenewalEstimateRequest includeDelayedCharges(Boolean includeDelayedCharges) {
+            params.addOpt("include_delayed_charges", includeDelayedCharges);
+            return this;
+        }
+
+
+        public RenewalEstimateRequest useExistingBalances(Boolean useExistingBalances) {
+            params.addOpt("use_existing_balances", useExistingBalances);
+            return this;
+        }
+
 
         @Override
         public Params params() {

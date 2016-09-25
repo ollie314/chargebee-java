@@ -2,6 +2,8 @@ package com.chargebee.models;
 
 import com.chargebee.*;
 import com.chargebee.internal.*;
+import com.chargebee.filters.*;
+import com.chargebee.filters.enums.SortOrder;
 import com.chargebee.internal.HttpUtil.Method;
 import com.chargebee.models.enums.*;
 import org.json.*;
@@ -68,6 +70,10 @@ public class Addon extends Resource<Addon> {
         return optString("invoice_name");
     }
 
+    public String description() {
+        return optString("description");
+    }
+
     public Type type() {
         return reqEnum("type", Type.class);
     }
@@ -78,6 +84,10 @@ public class Addon extends Resource<Addon> {
 
     public Integer price() {
         return reqInteger("price");
+    }
+
+    public String currencyCode() {
+        return reqString("currency_code");
     }
 
     public Integer period() {
@@ -100,6 +110,26 @@ public class Addon extends Resource<Addon> {
         return optTimestamp("archived_at");
     }
 
+    public Boolean enabledInPortal() {
+        return reqBoolean("enabled_in_portal");
+    }
+
+    public String taxCode() {
+        return optString("tax_code");
+    }
+
+    public String invoiceNotes() {
+        return optString("invoice_notes");
+    }
+
+    public Boolean taxable() {
+        return optBoolean("taxable");
+    }
+
+    public JSONObject metaData() {
+        return optJSONObject("meta_data");
+    }
+
     // Operations
     //===========
 
@@ -113,9 +143,9 @@ public class Addon extends Resource<Addon> {
         return new UpdateRequest(Method.POST, uri);
     }
 
-    public static ListRequest list() throws IOException {
+    public static AddonListRequest list() throws IOException {
         String uri = uri("addons");
-        return new ListRequest(uri);
+        return new AddonListRequest(uri);
     }
 
     public static Request retrieve(String id) throws IOException {
@@ -156,6 +186,12 @@ public class Addon extends Resource<Addon> {
         }
 
 
+        public CreateRequest description(String description) {
+            params.addOpt("description", description);
+            return this;
+        }
+
+
         public CreateRequest chargeType(ChargeType chargeType) {
             params.add("charge_type", chargeType);
             return this;
@@ -164,6 +200,12 @@ public class Addon extends Resource<Addon> {
 
         public CreateRequest price(Integer price) {
             params.addOpt("price", price);
+            return this;
+        }
+
+
+        public CreateRequest currencyCode(String currencyCode) {
+            params.addOpt("currency_code", currencyCode);
             return this;
         }
 
@@ -188,6 +230,36 @@ public class Addon extends Resource<Addon> {
 
         public CreateRequest unit(String unit) {
             params.addOpt("unit", unit);
+            return this;
+        }
+
+
+        public CreateRequest enabledInPortal(Boolean enabledInPortal) {
+            params.addOpt("enabled_in_portal", enabledInPortal);
+            return this;
+        }
+
+
+        public CreateRequest taxable(Boolean taxable) {
+            params.addOpt("taxable", taxable);
+            return this;
+        }
+
+
+        public CreateRequest taxCode(String taxCode) {
+            params.addOpt("tax_code", taxCode);
+            return this;
+        }
+
+
+        public CreateRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public CreateRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
             return this;
         }
 
@@ -222,6 +294,12 @@ public class Addon extends Resource<Addon> {
         }
 
 
+        public UpdateRequest description(String description) {
+            params.addOpt("description", description);
+            return this;
+        }
+
+
         public UpdateRequest chargeType(ChargeType chargeType) {
             params.addOpt("charge_type", chargeType);
             return this;
@@ -230,6 +308,12 @@ public class Addon extends Resource<Addon> {
 
         public UpdateRequest price(Integer price) {
             params.addOpt("price", price);
+            return this;
+        }
+
+
+        public UpdateRequest currencyCode(String currencyCode) {
+            params.addOpt("currency_code", currencyCode);
             return this;
         }
 
@@ -255,6 +339,88 @@ public class Addon extends Resource<Addon> {
         public UpdateRequest unit(String unit) {
             params.addOpt("unit", unit);
             return this;
+        }
+
+
+        public UpdateRequest enabledInPortal(Boolean enabledInPortal) {
+            params.addOpt("enabled_in_portal", enabledInPortal);
+            return this;
+        }
+
+
+        public UpdateRequest taxable(Boolean taxable) {
+            params.addOpt("taxable", taxable);
+            return this;
+        }
+
+
+        public UpdateRequest taxCode(String taxCode) {
+            params.addOpt("tax_code", taxCode);
+            return this;
+        }
+
+
+        public UpdateRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public UpdateRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
+            return this;
+        }
+
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class AddonListRequest extends ListRequest<AddonListRequest> {
+
+        private AddonListRequest(String uri) {
+            super(uri);
+        }
+    
+        public StringFilter<AddonListRequest> id() {
+            return new StringFilter<AddonListRequest>("id",this).supportsMultiOperators(true);        
+        }
+
+
+        public StringFilter<AddonListRequest> name() {
+            return new StringFilter<AddonListRequest>("name",this).supportsMultiOperators(true);        
+        }
+
+
+        public EnumFilter<Type, AddonListRequest> type() {
+            return new EnumFilter<Type, AddonListRequest>("type",this);        
+        }
+
+
+        public EnumFilter<ChargeType, AddonListRequest> chargeType() {
+            return new EnumFilter<ChargeType, AddonListRequest>("charge_type",this);        
+        }
+
+
+        public NumberFilter<Integer, AddonListRequest> price() {
+            return new NumberFilter<Integer, AddonListRequest>("price",this);        
+        }
+
+
+        public NumberFilter<Integer, AddonListRequest> period() {
+            return new NumberFilter<Integer, AddonListRequest>("period",this);        
+        }
+
+
+        public EnumFilter<PeriodUnit, AddonListRequest> periodUnit() {
+            return new EnumFilter<PeriodUnit, AddonListRequest>("period_unit",this);        
+        }
+
+
+        public EnumFilter<Status, AddonListRequest> status() {
+            return new EnumFilter<Status, AddonListRequest>("status",this);        
         }
 
 

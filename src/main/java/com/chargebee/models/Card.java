@@ -2,6 +2,8 @@ package com.chargebee.models;
 
 import com.chargebee.*;
 import com.chargebee.internal.*;
+import com.chargebee.filters.*;
+import com.chargebee.filters.enums.SortOrder;
 import com.chargebee.internal.HttpUtil.Method;
 import com.chargebee.models.enums.*;
 import org.json.*;
@@ -98,6 +100,10 @@ public class Card extends Resource<Card> {
         return optString("billing_city");
     }
 
+    public String billingStateCode() {
+        return optString("billing_state_code");
+    }
+
     public String billingState() {
         return optString("billing_state");
     }
@@ -108,6 +114,10 @@ public class Card extends Resource<Card> {
 
     public String billingZip() {
         return optString("billing_zip");
+    }
+
+    public String ipAddress() {
+        return optString("ip_address");
     }
 
     public String maskedNumber() {
@@ -125,6 +135,16 @@ public class Card extends Resource<Card> {
     public static UpdateCardForCustomerRequest updateCardForCustomer(String id) throws IOException {
         String uri = uri("customers", nullCheck(id), "credit_card");
         return new UpdateCardForCustomerRequest(Method.POST, uri);
+    }
+
+    public static SwitchGatewayForCustomerRequest switchGatewayForCustomer(String id) throws IOException {
+        String uri = uri("customers", nullCheck(id), "switch_gateway");
+        return new SwitchGatewayForCustomerRequest(Method.POST, uri);
+    }
+
+    public static CopyCardForCustomerRequest copyCardForCustomer(String id) throws IOException {
+        String uri = uri("customers", nullCheck(id), "copy_card");
+        return new CopyCardForCustomerRequest(Method.POST, uri);
     }
 
     public static Request deleteCardForCustomer(String id) throws IOException {
@@ -208,6 +228,12 @@ public class Card extends Resource<Card> {
         }
 
 
+        public UpdateCardForCustomerRequest billingStateCode(String billingStateCode) {
+            params.addOpt("billing_state_code", billingStateCode);
+            return this;
+        }
+
+
         public UpdateCardForCustomerRequest billingState(String billingState) {
             params.addOpt("billing_state", billingState);
             return this;
@@ -227,10 +253,53 @@ public class Card extends Resource<Card> {
 
 
         @Deprecated
+        public UpdateCardForCustomerRequest ipAddress(String ipAddress) {
+            params.addOpt("ip_address", ipAddress);
+            return this;
+        }
+
+
+        @Deprecated
         public UpdateCardForCustomerRequest customerVatNumber(String customerVatNumber) {
             params.addOpt("customer[vat_number]", customerVatNumber);
             return this;
         }
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class SwitchGatewayForCustomerRequest extends Request<SwitchGatewayForCustomerRequest> {
+
+        private SwitchGatewayForCustomerRequest(Method httpMeth, String uri) {
+            super(httpMeth, uri);
+        }
+    
+        public SwitchGatewayForCustomerRequest gateway(Gateway gateway) {
+            params.add("gateway", gateway);
+            return this;
+        }
+
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class CopyCardForCustomerRequest extends Request<CopyCardForCustomerRequest> {
+
+        private CopyCardForCustomerRequest(Method httpMeth, String uri) {
+            super(httpMeth, uri);
+        }
+    
+        public CopyCardForCustomerRequest gateway(Gateway gateway) {
+            params.add("gateway", gateway);
+            return this;
+        }
+
 
         @Override
         public Params params() {

@@ -2,6 +2,8 @@ package com.chargebee.models;
 
 import com.chargebee.*;
 import com.chargebee.internal.*;
+import com.chargebee.filters.*;
+import com.chargebee.filters.enums.SortOrder;
 import com.chargebee.internal.HttpUtil.Method;
 import com.chargebee.models.enums.*;
 import org.json.*;
@@ -22,6 +24,13 @@ public class Plan extends Resource<Plan> {
     public enum TrialPeriodUnit {
         DAY,
         MONTH,
+        _UNKNOWN; /*Indicates unexpected value for this enum. You can get this when there is a
+        java-client version incompatibility. We suggest you to upgrade to the latest version */
+    }
+
+    public enum ChargeModel {
+        FLAT_FEE,
+        PER_UNIT,
         _UNKNOWN; /*Indicates unexpected value for this enum. You can get this when there is a
         java-client version incompatibility. We suggest you to upgrade to the latest version */
     }
@@ -60,8 +69,16 @@ public class Plan extends Resource<Plan> {
         return optString("invoice_name");
     }
 
+    public String description() {
+        return optString("description");
+    }
+
     public Integer price() {
         return reqInteger("price");
+    }
+
+    public String currencyCode() {
+        return reqString("currency_code");
     }
 
     public Integer period() {
@@ -80,6 +97,10 @@ public class Plan extends Resource<Plan> {
         return optEnum("trial_period_unit", TrialPeriodUnit.class);
     }
 
+    public ChargeModel chargeModel() {
+        return reqEnum("charge_model", ChargeModel.class);
+    }
+
     public Integer freeQuantity() {
         return reqInteger("free_quantity");
     }
@@ -88,6 +109,7 @@ public class Plan extends Resource<Plan> {
         return optInteger("setup_cost");
     }
 
+    @Deprecated
     public Double downgradePenalty() {
         return optDouble("downgrade_penalty");
     }
@@ -108,6 +130,30 @@ public class Plan extends Resource<Plan> {
         return optString("redirect_url");
     }
 
+    public Boolean enabledInHostedPages() {
+        return reqBoolean("enabled_in_hosted_pages");
+    }
+
+    public Boolean enabledInPortal() {
+        return reqBoolean("enabled_in_portal");
+    }
+
+    public String taxCode() {
+        return optString("tax_code");
+    }
+
+    public String invoiceNotes() {
+        return optString("invoice_notes");
+    }
+
+    public Boolean taxable() {
+        return optBoolean("taxable");
+    }
+
+    public JSONObject metaData() {
+        return optJSONObject("meta_data");
+    }
+
     // Operations
     //===========
 
@@ -121,9 +167,9 @@ public class Plan extends Resource<Plan> {
         return new UpdateRequest(Method.POST, uri);
     }
 
-    public static ListRequest list() throws IOException {
+    public static PlanListRequest list() throws IOException {
         String uri = uri("plans");
-        return new ListRequest(uri);
+        return new PlanListRequest(uri);
     }
 
     public static Request retrieve(String id) throws IOException {
@@ -164,6 +210,12 @@ public class Plan extends Resource<Plan> {
         }
 
 
+        public CreateRequest description(String description) {
+            params.addOpt("description", description);
+            return this;
+        }
+
+
         public CreateRequest trialPeriod(Integer trialPeriod) {
             params.addOpt("trial_period", trialPeriod);
             return this;
@@ -200,8 +252,20 @@ public class Plan extends Resource<Plan> {
         }
 
 
+        public CreateRequest currencyCode(String currencyCode) {
+            params.addOpt("currency_code", currencyCode);
+            return this;
+        }
+
+
         public CreateRequest billingCycles(Integer billingCycles) {
             params.addOpt("billing_cycles", billingCycles);
+            return this;
+        }
+
+
+        public CreateRequest chargeModel(ChargeModel chargeModel) {
+            params.addOpt("charge_model", chargeModel);
             return this;
         }
 
@@ -212,6 +276,7 @@ public class Plan extends Resource<Plan> {
         }
 
 
+        @Deprecated
         public CreateRequest downgradePenalty(Double downgradePenalty) {
             params.addOpt("downgrade_penalty", downgradePenalty);
             return this;
@@ -220,6 +285,42 @@ public class Plan extends Resource<Plan> {
 
         public CreateRequest redirectUrl(String redirectUrl) {
             params.addOpt("redirect_url", redirectUrl);
+            return this;
+        }
+
+
+        public CreateRequest enabledInHostedPages(Boolean enabledInHostedPages) {
+            params.addOpt("enabled_in_hosted_pages", enabledInHostedPages);
+            return this;
+        }
+
+
+        public CreateRequest enabledInPortal(Boolean enabledInPortal) {
+            params.addOpt("enabled_in_portal", enabledInPortal);
+            return this;
+        }
+
+
+        public CreateRequest taxable(Boolean taxable) {
+            params.addOpt("taxable", taxable);
+            return this;
+        }
+
+
+        public CreateRequest taxCode(String taxCode) {
+            params.addOpt("tax_code", taxCode);
+            return this;
+        }
+
+
+        public CreateRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public CreateRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
             return this;
         }
 
@@ -250,6 +351,12 @@ public class Plan extends Resource<Plan> {
 
         public UpdateRequest invoiceName(String invoiceName) {
             params.addOpt("invoice_name", invoiceName);
+            return this;
+        }
+
+
+        public UpdateRequest description(String description) {
+            params.addOpt("description", description);
             return this;
         }
 
@@ -290,8 +397,20 @@ public class Plan extends Resource<Plan> {
         }
 
 
+        public UpdateRequest currencyCode(String currencyCode) {
+            params.addOpt("currency_code", currencyCode);
+            return this;
+        }
+
+
         public UpdateRequest billingCycles(Integer billingCycles) {
             params.addOpt("billing_cycles", billingCycles);
+            return this;
+        }
+
+
+        public UpdateRequest chargeModel(ChargeModel chargeModel) {
+            params.addOpt("charge_model", chargeModel);
             return this;
         }
 
@@ -302,6 +421,7 @@ public class Plan extends Resource<Plan> {
         }
 
 
+        @Deprecated
         public UpdateRequest downgradePenalty(Double downgradePenalty) {
             params.addOpt("downgrade_penalty", downgradePenalty);
             return this;
@@ -311,6 +431,99 @@ public class Plan extends Resource<Plan> {
         public UpdateRequest redirectUrl(String redirectUrl) {
             params.addOpt("redirect_url", redirectUrl);
             return this;
+        }
+
+
+        public UpdateRequest enabledInHostedPages(Boolean enabledInHostedPages) {
+            params.addOpt("enabled_in_hosted_pages", enabledInHostedPages);
+            return this;
+        }
+
+
+        public UpdateRequest enabledInPortal(Boolean enabledInPortal) {
+            params.addOpt("enabled_in_portal", enabledInPortal);
+            return this;
+        }
+
+
+        public UpdateRequest taxable(Boolean taxable) {
+            params.addOpt("taxable", taxable);
+            return this;
+        }
+
+
+        public UpdateRequest taxCode(String taxCode) {
+            params.addOpt("tax_code", taxCode);
+            return this;
+        }
+
+
+        public UpdateRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public UpdateRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
+            return this;
+        }
+
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class PlanListRequest extends ListRequest<PlanListRequest> {
+
+        private PlanListRequest(String uri) {
+            super(uri);
+        }
+    
+        public StringFilter<PlanListRequest> id() {
+            return new StringFilter<PlanListRequest>("id",this).supportsMultiOperators(true);        
+        }
+
+
+        public StringFilter<PlanListRequest> name() {
+            return new StringFilter<PlanListRequest>("name",this).supportsMultiOperators(true);        
+        }
+
+
+        public NumberFilter<Integer, PlanListRequest> price() {
+            return new NumberFilter<Integer, PlanListRequest>("price",this);        
+        }
+
+
+        public NumberFilter<Integer, PlanListRequest> period() {
+            return new NumberFilter<Integer, PlanListRequest>("period",this);        
+        }
+
+
+        public EnumFilter<PeriodUnit, PlanListRequest> periodUnit() {
+            return new EnumFilter<PeriodUnit, PlanListRequest>("period_unit",this);        
+        }
+
+
+        public NumberFilter<Integer, PlanListRequest> trialPeriod() {
+            return new NumberFilter<Integer, PlanListRequest>("trial_period",this).supportsPresenceOperator(true);        
+        }
+
+
+        public EnumFilter<TrialPeriodUnit, PlanListRequest> trialPeriodUnit() {
+            return new EnumFilter<TrialPeriodUnit, PlanListRequest>("trial_period_unit",this);        
+        }
+
+
+        public EnumFilter<ChargeModel, PlanListRequest> chargeModel() {
+            return new EnumFilter<ChargeModel, PlanListRequest>("charge_model",this);        
+        }
+
+
+        public EnumFilter<Status, PlanListRequest> status() {
+            return new EnumFilter<Status, PlanListRequest>("status",this);        
         }
 
 

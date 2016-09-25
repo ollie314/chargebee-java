@@ -1,8 +1,9 @@
 package com.chargebee.internal;
 
 import com.chargebee.Environment;
+import com.chargebee.gdata.PercentEscaper;
 import java.io.*;
-import java.net.URLEncoder;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.logging.Level;
@@ -60,7 +61,7 @@ public class Resource<T> {
     }
 
     public Boolean reqBoolean(String key) {
-        return assertReqProp(key, optional(key, Boolean.class));
+        return assertReqProp(key, optBoolean(key));
     }
 
     public Boolean optBoolean(String key) {
@@ -79,9 +80,22 @@ public class Resource<T> {
             throw conversionException(key);
         }
     }
+    
+    public BigDecimal reqBigDecimal(String key) {
+        return assertReqProp(key, optBigDecimal( key));
+    }
+
+    public BigDecimal optBigDecimal(String key) {
+        BigDecimal value = optional( key, BigDecimal.class);
+        try{
+            return (value != null)? value : null;
+        }catch(Exception ex){
+            throw conversionException(key);
+        }
+    }
 
     public Double reqDouble(String key) {
-        return assertReqProp(key, reqDouble( key));
+        return assertReqProp(key, optDouble(key));
     }
 
     public Double optDouble(String key) {
@@ -206,6 +220,17 @@ public class Resource<T> {
             return null;
         }
         if(!type.isAssignableFrom(val.getClass())){
+            //JSON returns Integer values if the string format is without decimal points
+            // Like 10  instead of 10.0 
+            if(BigDecimal.class == type && val instanceof Number){
+                return (T) new BigDecimal(String.valueOf(val));
+            }
+            if(Double.class == type && val instanceof Number){
+                return (T) new Double(((Number)val).doubleValue());
+            }
+            if(Float.class == type && val instanceof Number){
+                return (T) new Float(((Number)val).floatValue());
+            }
             throw new RuntimeException("Type mismatch for property " + key
                     + " . Expected " + type.getName() + " but contains " + val.getClass().getName());
         }
@@ -250,13 +275,23 @@ public class Resource<T> {
         StringBuilder strBuf = new StringBuilder();
         for (String path : paths) {
             try {//Using URLEncoder is wrong as it encodes for form. Replace it with Google's CharEscapers.java
-                strBuf.append('/').append(URLEncoder.encode(path, Environment.CHARSET));
-            } catch (UnsupportedEncodingException ex) {
+                strBuf.append('/').append(new PercentEscaper(PercentEscaper.SAFEPATHCHARS_URLENCODER, false) .escape(path));
+            } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         }
         return strBuf.toString();
+    }   
+    
+    protected static void apiVersionCheck(JSONObject jsonObj) {
+        if (!jsonObj.has("api_version")) {
+            return;
+        }
+        String apiVersion = jsonObj.optString("api_version");
+        if (apiVersion != null && !jsonObj.optString("api_version").equalsIgnoreCase(Environment.API_VERSION)) {
+            throw new RuntimeException("API version [" + apiVersion.toUpperCase() + "] in response does not match "
+                    + "with client library API version [" + Environment.API_VERSION.toUpperCase() + "]");
+        }
     }
-
 
 }

@@ -1,17 +1,18 @@
 package com.chargebee.internal;
 
 import com.chargebee.*;
-import org.apache.commons.codec.binary.Base64;
-import org.json.*;
+import com.chargebee.exceptions.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
+import org.apache.commons.codec.binary.Base64;
+import org.json.*;
 
 public class HttpUtil {
 
     public enum Method {
-        GET, POST, PUT, DELETE;
+        GET, POST;
     }
 
     /**
@@ -35,38 +36,44 @@ public class HttpUtil {
         }
     }
 
-    public static Result get(String url, Params params, Environment env) throws IOException {
+    public static Result get(String url, Params params, Map<String,String> headers,Environment env) throws IOException {
         if(params != null && !params.isEmpty()) {
             url = url + '?' + toQueryStr(params); // fixme: what about url size restrictions ??
         }
-        HttpURLConnection conn = createConnection(url, Method.GET, env);
+        HttpURLConnection conn = createConnection(url, Method.GET, headers,env);
         Resp resp = sendRequest(conn);
         return resp.toResult();
     }
 
-    public static ListResult getList(String url, Params params, Environment env) throws IOException {
+    public static ListResult getList(String url, Params params, Map<String,String> headers,Environment env) throws IOException {
         if(params != null && !params.isEmpty()) {
-            url = url + '?' + toQueryStr(params); // fixme: what about url size restrictions ??
+            url = url + '?' + toQueryStr(params, true); // fixme: what about url size restrictions ??
         }
-        HttpURLConnection conn = createConnection(url, Method.GET, env);
+        HttpURLConnection conn = createConnection(url, Method.GET, headers,env);
         Resp resp = sendRequest(conn);
         return resp.toListResult();
     }
 
-    public static Result post(String url, Params params, Environment env) throws IOException {
-        return doFormSubmit(url,Method.POST, toQueryStr(params), env);
+    public static Result post(String url, Params params, Map<String,String> headers, Environment env) throws IOException {
+        return doFormSubmit(url,Method.POST, toQueryStr(params), headers,env);
     }
 
-    public static Result put(String url, Params params, Environment env) throws IOException {
-        return doFormSubmit(url,Method.PUT, toQueryStr(params), env);
-    }
 
     public static String toQueryStr(Params map) {
+        return toQueryStr(map, false);
+    }
+    
+    public static String toQueryStr(Params map, boolean isListReq) {
         StringJoiner buf = new StringJoiner("&");
         for (Map.Entry<String, Object> entry : map.entries()) {
             Object value = entry.getValue();            
             if(value instanceof List){
                List<String> l = (List<String>)value;
+               if(isListReq){
+                   String keyValPair = enc(entry.getKey()) + "=" + enc(l.isEmpty()?"": l.toString());
+                   buf.add(keyValPair);
+                   continue;
+               }
                 for (int i = 0; i < l.size(); i++) {
                     String val = l.get(i);
                     String keyValPair = enc(entry.getKey() + "[" + i + "]") + "=" + enc(val != null?val:"");
@@ -88,8 +95,9 @@ public class HttpUtil {
         }
     }
 
-    private static Result doFormSubmit(String url,Method m, String queryStr, Environment env) throws IOException {
-        HttpURLConnection conn = createConnection(url, m, env);
+    private static Result doFormSubmit(String url,Method m, String queryStr, Map<String,String> headers,
+            Environment env) throws IOException {
+        HttpURLConnection conn = createConnection(url, m, headers,env);
         writeContent(conn, queryStr);
         Resp resp = sendRequest(conn);
         return resp.toResult();
@@ -107,14 +115,17 @@ public class HttpUtil {
         }
     }
 
-    private static HttpURLConnection createConnection(String url, Method m, Environment config)
+    private static HttpURLConnection createConnection(String url, Method m, 
+            Map<String,String> headers,
+            Environment config)
             throws IOException {
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod(m.name());
         setTimeouts(conn, config);
         addHeaders(conn, config);
+        addCustomHeaders(conn,headers);
         setContentType(conn, m);
-        if ((m == Method.POST) || (m == Method.PUT)) {
+        if (m == Method.POST) {
             conn.setDoOutput(true);
         }
         conn.setUseCaches(false);
@@ -127,9 +138,26 @@ public class HttpUtil {
             throw new RuntimeException("Got http_no_content response");
         }
         boolean error = httpRespCode < 200 || httpRespCode > 299;
-        JSONObject jsonResp = getContentAsJSON(conn, error);
+        String content = getContentAsString(conn, error);
+        JSONObject jsonResp = getContentAsJSON(content);
         if(error) {
-            throw new APIException(jsonResp);
+            try {
+                jsonResp.getString("api_error_code");
+                String type = jsonResp.optString("type");
+                if ("payment".equals(type)) {
+                    throw new PaymentException(httpRespCode, jsonResp);
+                } else if ("operation_failed".equals(type)) {
+                    throw new OperationFailedException(httpRespCode, jsonResp);
+                } else if ("invalid_request".equals(type)) {
+                    throw new InvalidRequestException(httpRespCode, jsonResp);
+                } else{
+                    throw new APIException(httpRespCode, jsonResp);
+                }
+            }catch(APIException ex){
+                throw ex;            
+            } catch (Exception ex) {
+                throw new RuntimeException("Error when parsing the error response. Probably not ChargeBee' error response. The content is \n " + content, ex);
+            }
         }
         return new Resp(httpRespCode, jsonResp);
     }
@@ -140,7 +168,7 @@ public class HttpUtil {
     }
 
     private static void setContentType(HttpURLConnection conn, Method m) {
-        if ((m == Method.POST) || (m == Method.PUT)) {
+        if (m == Method.POST) {
             addHeader(conn, "Content-Type", "application/x-www-form-urlencoded;charset=" + Environment.CHARSET);
         }
     }
@@ -152,6 +180,12 @@ public class HttpUtil {
         addHeader(conn, "Accept", "application/json");
     }
 
+    private static void addCustomHeaders(HttpURLConnection conn, Map<String, String> headers) {
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            addHeader(conn, entry.getKey(), entry.getValue());
+        }
+    }
+
     private static void addHeader(HttpURLConnection conn, String headerName, String value) {
         conn.setRequestProperty(headerName, value);
     }
@@ -161,15 +195,13 @@ public class HttpUtil {
                 .replaceAll("\r?", "").replaceAll("\n?", "");
     }
 
-    private static JSONObject getContentAsJSON(HttpURLConnection conn, boolean error) throws IOException {
-        String content = getContentAsString(conn, error);
+    private static JSONObject getContentAsJSON(String content) throws IOException {
         JSONObject obj;
         try {
             obj = new JSONObject(content);
         } catch (JSONException exp) {
-            throw new RuntimeException(exp.getMessage());
+            throw new RuntimeException("Not in JSON format. Probably not a ChargeBee response. \n " + content,exp);
         }
-        checkRequiredJSONResp(obj);
         return obj;
     }
 
@@ -196,10 +228,7 @@ public class HttpUtil {
             resp.close();
         }
     }
+    
+    
 
-    private static void checkRequiredJSONResp(JSONObject respObj) {
-        if (respObj == null) {
-            throw new RuntimeException("Expected json formatted content in response");
-        }
-    }
 }

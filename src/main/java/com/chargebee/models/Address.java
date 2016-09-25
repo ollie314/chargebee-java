@@ -2,6 +2,8 @@ package com.chargebee.models;
 
 import com.chargebee.*;
 import com.chargebee.internal.*;
+import com.chargebee.filters.*;
+import com.chargebee.filters.enums.SortOrder;
 import com.chargebee.internal.HttpUtil.Method;
 import com.chargebee.models.enums.*;
 import org.json.*;
@@ -65,6 +67,10 @@ public class Address extends Resource<Address> {
         return optString("city");
     }
 
+    public String stateCode() {
+        return optString("state_code");
+    }
+
     public String state() {
         return optString("state");
     }
@@ -75,6 +81,10 @@ public class Address extends Resource<Address> {
 
     public String zip() {
         return optString("zip");
+    }
+
+    public ValidationStatus validationStatus() {
+        return optEnum("validation_status", ValidationStatus.class);
     }
 
     public String subscriptionId() {
@@ -194,6 +204,12 @@ public class Address extends Resource<Address> {
         }
 
 
+        public UpdateRequest stateCode(String stateCode) {
+            params.addOpt("state_code", stateCode);
+            return this;
+        }
+
+
         public UpdateRequest state(String state) {
             params.addOpt("state", state);
             return this;
@@ -208,6 +224,12 @@ public class Address extends Resource<Address> {
 
         public UpdateRequest country(String country) {
             params.addOpt("country", country);
+            return this;
+        }
+
+
+        public UpdateRequest validationStatus(ValidationStatus validationStatus) {
+            params.addOpt("validation_status", validationStatus);
             return this;
         }
 

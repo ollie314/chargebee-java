@@ -2,6 +2,8 @@ package com.chargebee.models;
 
 import com.chargebee.*;
 import com.chargebee.internal.*;
+import com.chargebee.filters.*;
+import com.chargebee.filters.enums.SortOrder;
 import com.chargebee.internal.HttpUtil.Method;
 import com.chargebee.models.enums.*;
 import org.json.*;
@@ -25,6 +27,9 @@ public class Subscription extends Resource<Subscription> {
         NOT_PAID,
         NO_CARD,
         FRAUD_REVIEW_FAILED,
+        NON_COMPLIANT_EU_CUSTOMER,
+        TAX_CALCULATION_FAILED,
+        CURRENCY_INCOMPATIBLE_WITH_GATEWAY,
         _UNKNOWN; /*Indicates unexpected value for this enum. You can get this when there is a
         java-client version incompatibility. We suggest you to upgrade to the latest version */
     }
@@ -108,6 +113,10 @@ public class Subscription extends Resource<Subscription> {
             return optString("city");
         }
 
+        public String stateCode() {
+            return optString("state_code");
+        }
+
         public String state() {
             return optString("state");
         }
@@ -118,6 +127,10 @@ public class Subscription extends Resource<Subscription> {
 
         public String zip() {
             return optString("zip");
+        }
+
+        public ValidationStatus validationStatus() {
+            return optEnum("validation_status", ValidationStatus.class);
         }
 
     }
@@ -138,6 +151,14 @@ public class Subscription extends Resource<Subscription> {
 
     public String id() {
         return reqString("id");
+    }
+
+    public String customerId() {
+        return reqString("customer_id");
+    }
+
+    public String currencyCode() {
+        return reqString("currency_code");
     }
 
     public String planId() {
@@ -176,6 +197,10 @@ public class Subscription extends Resource<Subscription> {
         return optInteger("remaining_billing_cycles");
     }
 
+    public String poNumber() {
+        return optString("po_number");
+    }
+
     public Timestamp createdAt() {
         return optTimestamp("created_at");
     }
@@ -194,6 +219,18 @@ public class Subscription extends Resource<Subscription> {
 
     public CancelReason cancelReason() {
         return optEnum("cancel_reason", CancelReason.class);
+    }
+
+    public String affiliateToken() {
+        return optString("affiliate_token");
+    }
+
+    public String createdFromIp() {
+        return optString("created_from_ip");
+    }
+
+    public Boolean hasScheduledChanges() {
+        return reqBoolean("has_scheduled_changes");
     }
 
     public Integer dueInvoicesCount() {
@@ -225,6 +262,14 @@ public class Subscription extends Resource<Subscription> {
         return optSubResource("shipping_address", Subscription.ShippingAddress.class);
     }
 
+    public String invoiceNotes() {
+        return optString("invoice_notes");
+    }
+
+    public JSONObject metaData() {
+        return optJSONObject("meta_data");
+    }
+
     // Operations
     //===========
 
@@ -238,11 +283,12 @@ public class Subscription extends Resource<Subscription> {
         return new CreateForCustomerRequest(Method.POST, uri);
     }
 
-    public static ListRequest list() throws IOException {
+    public static SubscriptionListRequest list() throws IOException {
         String uri = uri("subscriptions");
-        return new ListRequest(uri);
+        return new SubscriptionListRequest(uri);
     }
 
+    @Deprecated
     public static ListRequest subscriptionsForCustomer(String id) throws IOException {
         String uri = uri("customers", nullCheck(id), "subscriptions");
         return new ListRequest(uri);
@@ -251,6 +297,26 @@ public class Subscription extends Resource<Subscription> {
     public static Request retrieve(String id) throws IOException {
         String uri = uri("subscriptions", nullCheck(id));
         return new Request(Method.GET, uri);
+    }
+
+    public static Request retrieveWithScheduledChanges(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "retrieve_with_scheduled_changes");
+        return new Request(Method.GET, uri);
+    }
+
+    public static Request removeScheduledChanges(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "remove_scheduled_changes");
+        return new Request(Method.POST, uri);
+    }
+
+    public static RemoveScheduledCancellationRequest removeScheduledCancellation(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "remove_scheduled_cancellation");
+        return new RemoveScheduledCancellationRequest(Method.POST, uri);
+    }
+
+    public static RemoveCouponsRequest removeCoupons(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "remove_coupons");
+        return new RemoveCouponsRequest(Method.POST, uri);
     }
 
     public static UpdateRequest update(String id) throws IOException {
@@ -273,9 +339,19 @@ public class Subscription extends Resource<Subscription> {
         return new ReactivateRequest(Method.POST, uri);
     }
 
-    public static AddCreditRequest addCredit(String id) throws IOException {
-        String uri = uri("subscriptions", nullCheck(id), "add_credit");
-        return new AddCreditRequest(Method.POST, uri);
+    public static AddChargeAtTermEndRequest addChargeAtTermEnd(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "add_charge_at_term_end");
+        return new AddChargeAtTermEndRequest(Method.POST, uri);
+    }
+
+    public static ChargeAddonAtTermEndRequest chargeAddonAtTermEnd(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "charge_addon_at_term_end");
+        return new ChargeAddonAtTermEndRequest(Method.POST, uri);
+    }
+
+    public static Request delete(String id) throws IOException {
+        String uri = uri("subscriptions", nullCheck(id), "delete");
+        return new Request(Method.POST, uri);
     }
 
 
@@ -330,6 +406,41 @@ public class Subscription extends Resource<Subscription> {
         }
 
 
+        public CreateRequest poNumber(String poNumber) {
+            params.addOpt("po_number", poNumber);
+            return this;
+        }
+
+
+
+
+
+
+        public CreateRequest affiliateToken(String affiliateToken) {
+            params.addOpt("affiliate_token", affiliateToken);
+            return this;
+        }
+
+
+        @Deprecated
+        public CreateRequest createdFromIp(String createdFromIp) {
+            params.addOpt("created_from_ip", createdFromIp);
+            return this;
+        }
+
+
+        public CreateRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public CreateRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
+            return this;
+        }
+
+
         public CreateRequest customerId(String customerId) {
             params.addOpt("customer[id]", customerId);
             return this;
@@ -355,6 +466,21 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public CreateRequest customerTaxability(Taxability customerTaxability) {
+            params.addOpt("customer[taxability]", customerTaxability);
+            return this;
+        }
+
+        public CreateRequest customerEntityCode(EntityCode customerEntityCode) {
+            params.addOpt("customer[entity_code]", customerEntityCode);
+            return this;
+        }
+
+        public CreateRequest customerExemptNumber(String customerExemptNumber) {
+            params.addOpt("customer[exempt_number]", customerExemptNumber);
+            return this;
+        }
+
         public CreateRequest customerPhone(String customerPhone) {
             params.addOpt("customer[phone]", customerPhone);
             return this;
@@ -365,6 +491,11 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public CreateRequest customerAllowDirectDebit(Boolean customerAllowDirectDebit) {
+            params.addOpt("customer[allow_direct_debit]", customerAllowDirectDebit);
+            return this;
+        }
+
         public CreateRequest cardGateway(Gateway cardGateway) {
             params.addOpt("card[gateway]", cardGateway);
             return this;
@@ -372,6 +503,21 @@ public class Subscription extends Resource<Subscription> {
 
         public CreateRequest cardTmpToken(String cardTmpToken) {
             params.addOpt("card[tmp_token]", cardTmpToken);
+            return this;
+        }
+
+        public CreateRequest paymentMethodType(Type paymentMethodType) {
+            params.addOpt("payment_method[type]", paymentMethodType);
+            return this;
+        }
+
+        public CreateRequest paymentMethodGateway(Gateway paymentMethodGateway) {
+            params.addOpt("payment_method[gateway]", paymentMethodGateway);
+            return this;
+        }
+
+        public CreateRequest paymentMethodReferenceId(String paymentMethodReferenceId) {
+            params.addOpt("payment_method[reference_id]", paymentMethodReferenceId);
             return this;
         }
 
@@ -420,6 +566,11 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public CreateRequest cardBillingStateCode(String cardBillingStateCode) {
+            params.addOpt("card[billing_state_code]", cardBillingStateCode);
+            return this;
+        }
+
         public CreateRequest cardBillingState(String cardBillingState) {
             params.addOpt("card[billing_state]", cardBillingState);
             return this;
@@ -432,6 +583,12 @@ public class Subscription extends Resource<Subscription> {
 
         public CreateRequest cardBillingCountry(String cardBillingCountry) {
             params.addOpt("card[billing_country]", cardBillingCountry);
+            return this;
+        }
+
+        @Deprecated
+        public CreateRequest cardIpAddress(String cardIpAddress) {
+            params.addOpt("card[ip_address]", cardIpAddress);
             return this;
         }
 
@@ -480,6 +637,11 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public CreateRequest billingAddressStateCode(String billingAddressStateCode) {
+            params.addOpt("billing_address[state_code]", billingAddressStateCode);
+            return this;
+        }
+
         public CreateRequest billingAddressState(String billingAddressState) {
             params.addOpt("billing_address[state]", billingAddressState);
             return this;
@@ -492,6 +654,11 @@ public class Subscription extends Resource<Subscription> {
 
         public CreateRequest billingAddressCountry(String billingAddressCountry) {
             params.addOpt("billing_address[country]", billingAddressCountry);
+            return this;
+        }
+
+        public CreateRequest billingAddressValidationStatus(ValidationStatus billingAddressValidationStatus) {
+            params.addOpt("billing_address[validation_status]", billingAddressValidationStatus);
             return this;
         }
 
@@ -540,6 +707,11 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public CreateRequest shippingAddressStateCode(String shippingAddressStateCode) {
+            params.addOpt("shipping_address[state_code]", shippingAddressStateCode);
+            return this;
+        }
+
         public CreateRequest shippingAddressState(String shippingAddressState) {
             params.addOpt("shipping_address[state]", shippingAddressState);
             return this;
@@ -552,6 +724,11 @@ public class Subscription extends Resource<Subscription> {
 
         public CreateRequest shippingAddressCountry(String shippingAddressCountry) {
             params.addOpt("shipping_address[country]", shippingAddressCountry);
+            return this;
+        }
+
+        public CreateRequest shippingAddressValidationStatus(ValidationStatus shippingAddressValidationStatus) {
+            params.addOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
             return this;
         }
 
@@ -624,6 +801,94 @@ public class Subscription extends Resource<Subscription> {
         }
 
 
+        public CreateForCustomerRequest poNumber(String poNumber) {
+            params.addOpt("po_number", poNumber);
+            return this;
+        }
+
+
+        public CreateForCustomerRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public CreateForCustomerRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
+            return this;
+        }
+
+
+        public CreateForCustomerRequest shippingAddressFirstName(String shippingAddressFirstName) {
+            params.addOpt("shipping_address[first_name]", shippingAddressFirstName);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressLastName(String shippingAddressLastName) {
+            params.addOpt("shipping_address[last_name]", shippingAddressLastName);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressEmail(String shippingAddressEmail) {
+            params.addOpt("shipping_address[email]", shippingAddressEmail);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressCompany(String shippingAddressCompany) {
+            params.addOpt("shipping_address[company]", shippingAddressCompany);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressPhone(String shippingAddressPhone) {
+            params.addOpt("shipping_address[phone]", shippingAddressPhone);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressLine1(String shippingAddressLine1) {
+            params.addOpt("shipping_address[line1]", shippingAddressLine1);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressLine2(String shippingAddressLine2) {
+            params.addOpt("shipping_address[line2]", shippingAddressLine2);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressLine3(String shippingAddressLine3) {
+            params.addOpt("shipping_address[line3]", shippingAddressLine3);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressCity(String shippingAddressCity) {
+            params.addOpt("shipping_address[city]", shippingAddressCity);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressStateCode(String shippingAddressStateCode) {
+            params.addOpt("shipping_address[state_code]", shippingAddressStateCode);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressState(String shippingAddressState) {
+            params.addOpt("shipping_address[state]", shippingAddressState);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressZip(String shippingAddressZip) {
+            params.addOpt("shipping_address[zip]", shippingAddressZip);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressCountry(String shippingAddressCountry) {
+            params.addOpt("shipping_address[country]", shippingAddressCountry);
+            return this;
+        }
+
+        public CreateForCustomerRequest shippingAddressValidationStatus(ValidationStatus shippingAddressValidationStatus) {
+            params.addOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
+            return this;
+        }
+
         public CreateForCustomerRequest addonId(int index, String addonId) {
             params.addOpt("addons[id][" + index + "]", addonId);
             return this;
@@ -631,6 +896,104 @@ public class Subscription extends Resource<Subscription> {
 
         public CreateForCustomerRequest addonQuantity(int index, Integer addonQuantity) {
             params.addOpt("addons[quantity][" + index + "]", addonQuantity);
+            return this;
+        }
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class SubscriptionListRequest extends ListRequest<SubscriptionListRequest> {
+
+        private SubscriptionListRequest(String uri) {
+            super(uri);
+        }
+    
+        public StringFilter<SubscriptionListRequest> id() {
+            return new StringFilter<SubscriptionListRequest>("id",this).supportsMultiOperators(true);        
+        }
+
+
+        public StringFilter<SubscriptionListRequest> customerId() {
+            return new StringFilter<SubscriptionListRequest>("customer_id",this).supportsMultiOperators(true);        
+        }
+
+
+        public StringFilter<SubscriptionListRequest> planId() {
+            return new StringFilter<SubscriptionListRequest>("plan_id",this).supportsMultiOperators(true);        
+        }
+
+
+        public EnumFilter<Status, SubscriptionListRequest> status() {
+            return new EnumFilter<Status, SubscriptionListRequest>("status",this);        
+        }
+
+
+        public EnumFilter<CancelReason, SubscriptionListRequest> cancelReason() {
+            return new EnumFilter<CancelReason, SubscriptionListRequest>("cancel_reason",this).supportsPresenceOperator(true);        
+        }
+
+
+        public NumberFilter<Integer, SubscriptionListRequest> remainingBillingCycles() {
+            return new NumberFilter<Integer, SubscriptionListRequest>("remaining_billing_cycles",this).supportsPresenceOperator(true);        
+        }
+
+
+        public TimestampFilter<SubscriptionListRequest> createdAt() {
+            return new TimestampFilter<SubscriptionListRequest>("created_at",this);        
+        }
+
+
+        public BooleanFilter<SubscriptionListRequest> hasScheduledChanges() {
+            return new BooleanFilter<SubscriptionListRequest>("has_scheduled_changes",this);        
+        }
+
+
+        public SubscriptionListRequest sortByCreatedAt(SortOrder order) {
+            params.addOpt("sort_by["+order.name().toLowerCase()+"]","created_at");
+            return this;
+        }
+
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class RemoveScheduledCancellationRequest extends Request<RemoveScheduledCancellationRequest> {
+
+        private RemoveScheduledCancellationRequest(Method httpMeth, String uri) {
+            super(httpMeth, uri);
+        }
+    
+        public RemoveScheduledCancellationRequest billingCycles(Integer billingCycles) {
+            params.addOpt("billing_cycles", billingCycles);
+            return this;
+        }
+
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class RemoveCouponsRequest extends Request<RemoveCouponsRequest> {
+
+        private RemoveCouponsRequest(Method httpMeth, String uri) {
+            super(httpMeth, uri);
+        }
+    
+        public RemoveCouponsRequest couponIds(List<String> couponIds) {
+            params.addOpt("coupon_ids", couponIds);
+            return this;
+        }
+
+        public RemoveCouponsRequest couponIds(String... couponIds) {
+            params.addOpt("coupon_ids", couponIds);
             return this;
         }
 
@@ -688,6 +1051,12 @@ public class Subscription extends Resource<Subscription> {
         }
 
 
+        public UpdateRequest poNumber(String poNumber) {
+            params.addOpt("po_number", poNumber);
+            return this;
+        }
+
+
         public UpdateRequest prorate(Boolean prorate) {
             params.addOpt("prorate", prorate);
             return this;
@@ -700,6 +1069,22 @@ public class Subscription extends Resource<Subscription> {
         }
 
 
+
+
+
+
+        public UpdateRequest invoiceNotes(String invoiceNotes) {
+            params.addOpt("invoice_notes", invoiceNotes);
+            return this;
+        }
+
+
+        public UpdateRequest metaData(JSONObject metaData) {
+            params.addOpt("meta_data", metaData);
+            return this;
+        }
+
+
         public UpdateRequest cardGateway(Gateway cardGateway) {
             params.addOpt("card[gateway]", cardGateway);
             return this;
@@ -707,6 +1092,26 @@ public class Subscription extends Resource<Subscription> {
 
         public UpdateRequest cardTmpToken(String cardTmpToken) {
             params.addOpt("card[tmp_token]", cardTmpToken);
+            return this;
+        }
+
+        public UpdateRequest paymentMethodType(Type paymentMethodType) {
+            params.addOpt("payment_method[type]", paymentMethodType);
+            return this;
+        }
+
+        public UpdateRequest paymentMethodGateway(Gateway paymentMethodGateway) {
+            params.addOpt("payment_method[gateway]", paymentMethodGateway);
+            return this;
+        }
+
+        public UpdateRequest paymentMethodReferenceId(String paymentMethodReferenceId) {
+            params.addOpt("payment_method[reference_id]", paymentMethodReferenceId);
+            return this;
+        }
+
+        public UpdateRequest paymentMethodTmpToken(String paymentMethodTmpToken) {
+            params.addOpt("payment_method[tmp_token]", paymentMethodTmpToken);
             return this;
         }
 
@@ -755,6 +1160,11 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public UpdateRequest cardBillingStateCode(String cardBillingStateCode) {
+            params.addOpt("card[billing_state_code]", cardBillingStateCode);
+            return this;
+        }
+
         public UpdateRequest cardBillingState(String cardBillingState) {
             params.addOpt("card[billing_state]", cardBillingState);
             return this;
@@ -767,6 +1177,12 @@ public class Subscription extends Resource<Subscription> {
 
         public UpdateRequest cardBillingCountry(String cardBillingCountry) {
             params.addOpt("card[billing_country]", cardBillingCountry);
+            return this;
+        }
+
+        @Deprecated
+        public UpdateRequest cardIpAddress(String cardIpAddress) {
+            params.addOpt("card[ip_address]", cardIpAddress);
             return this;
         }
 
@@ -815,6 +1231,11 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public UpdateRequest billingAddressStateCode(String billingAddressStateCode) {
+            params.addOpt("billing_address[state_code]", billingAddressStateCode);
+            return this;
+        }
+
         public UpdateRequest billingAddressState(String billingAddressState) {
             params.addOpt("billing_address[state]", billingAddressState);
             return this;
@@ -827,6 +1248,11 @@ public class Subscription extends Resource<Subscription> {
 
         public UpdateRequest billingAddressCountry(String billingAddressCountry) {
             params.addOpt("billing_address[country]", billingAddressCountry);
+            return this;
+        }
+
+        public UpdateRequest billingAddressValidationStatus(ValidationStatus billingAddressValidationStatus) {
+            params.addOpt("billing_address[validation_status]", billingAddressValidationStatus);
             return this;
         }
 
@@ -875,6 +1301,11 @@ public class Subscription extends Resource<Subscription> {
             return this;
         }
 
+        public UpdateRequest shippingAddressStateCode(String shippingAddressStateCode) {
+            params.addOpt("shipping_address[state_code]", shippingAddressStateCode);
+            return this;
+        }
+
         public UpdateRequest shippingAddressState(String shippingAddressState) {
             params.addOpt("shipping_address[state]", shippingAddressState);
             return this;
@@ -887,6 +1318,11 @@ public class Subscription extends Resource<Subscription> {
 
         public UpdateRequest shippingAddressCountry(String shippingAddressCountry) {
             params.addOpt("shipping_address[country]", shippingAddressCountry);
+            return this;
+        }
+
+        public UpdateRequest shippingAddressValidationStatus(ValidationStatus shippingAddressValidationStatus) {
+            params.addOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
             return this;
         }
 
@@ -959,6 +1395,12 @@ public class Subscription extends Resource<Subscription> {
         }
 
 
+        public ReactivateRequest billingCycles(Integer billingCycles) {
+            params.addOpt("billing_cycles", billingCycles);
+            return this;
+        }
+
+
         @Deprecated
         public ReactivateRequest trialPeriodDays(Integer trialPeriodDays) {
             params.addOpt("trial_period_days", trialPeriodDays);
@@ -972,20 +1414,44 @@ public class Subscription extends Resource<Subscription> {
         }
     }
 
-    public static class AddCreditRequest extends Request<AddCreditRequest> {
+    public static class AddChargeAtTermEndRequest extends Request<AddChargeAtTermEndRequest> {
 
-        private AddCreditRequest(Method httpMeth, String uri) {
+        private AddChargeAtTermEndRequest(Method httpMeth, String uri) {
             super(httpMeth, uri);
         }
     
-        public AddCreditRequest amount(Integer amount) {
+        public AddChargeAtTermEndRequest amount(Integer amount) {
             params.add("amount", amount);
             return this;
         }
 
 
-        public AddCreditRequest description(String description) {
+        public AddChargeAtTermEndRequest description(String description) {
             params.add("description", description);
+            return this;
+        }
+
+
+        @Override
+        public Params params() {
+            return params;
+        }
+    }
+
+    public static class ChargeAddonAtTermEndRequest extends Request<ChargeAddonAtTermEndRequest> {
+
+        private ChargeAddonAtTermEndRequest(Method httpMeth, String uri) {
+            super(httpMeth, uri);
+        }
+    
+        public ChargeAddonAtTermEndRequest addonId(String addonId) {
+            params.add("addon_id", addonId);
+            return this;
+        }
+
+
+        public ChargeAddonAtTermEndRequest addonQuantity(Integer addonQuantity) {
+            params.addOpt("addon_quantity", addonQuantity);
             return this;
         }
 
